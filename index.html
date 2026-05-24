@@ -1275,6 +1275,11 @@
   </div>
 
   <script>
+    const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNwgV32Af4QRLXStQT_RPDt99bEzMyABRHAJM_gxRs_iYYOezxV1BNiMeYLTQ8N05qTQ/exec";
+
+function getBaseUrl() {
+  return APPS_SCRIPT_WEB_APP_URL;
+}
 
     function forceAppsScriptMobileLayoutIfNeeded() {
       const ua = navigator.userAgent || "";
@@ -1382,95 +1387,50 @@
     }
 
     function verifyAndOpenCommunityAwarenessForm() {
-      const reg = document.getElementById("formRegNo").value.trim();
-      const email = document.getElementById("formEmailId").value.trim();
-      const button = document.getElementById("verifyFormButton");
+  const reg = document.getElementById("formRegNo").value.trim();
+  const email = document.getElementById("formEmailId").value.trim();
 
-      if (!/^\d{12}$/.test(reg)) {
-        showFormModalMessage("Please enter a valid 12 digit Registration No.", "warning");
-        return;
-      }
+  if (!/^\d{12}$/.test(reg)) {
+    showFormModalMessage("Please enter a valid 12 digit Registration No.", "warning");
+    return;
+  }
 
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        showFormModalMessage("Please enter a valid Email ID.", "warning");
-        return;
-      }
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    showFormModalMessage("Please enter a valid Email ID.", "warning");
+    return;
+  }
 
-      if (typeof google === "undefined" || !google.script || !google.script.run) {
-        showFormModalMessage("Please open this dashboard through the deployed Apps Script web app link.", "error");
-        return;
-      }
+  showFormModalMessage("Redirecting to secure eligibility verification. Please wait.", "info");
 
-      button.disabled = true;
-      button.textContent = "Checking...";
-      showFormModalMessage("Checking Phase 1 completion. Please wait.", "info");
+  const targetUrl =
+    APPS_SCRIPT_WEB_APP_URL +
+    "?page=communityAwareness&reg=" +
+    encodeURIComponent(reg) +
+    "&email=" +
+    encodeURIComponent(email);
 
-      google.script.run
-        .withSuccessHandler(function(response) {
-          button.disabled = false;
-          button.textContent = "Verify and Open Form";
-
-          if (response && response.status === "success" && response.eligible === true) {
-            if (response.formUrl) {
-              showFormModalMessage(response.message + " Opening Community Awareness Form...", "info");
-
-              setTimeout(function() {
-                window.top.location.href = response.formUrl;
-              }, 600);
-
-              return;
-            }
-
-            const formUrl =
-              getBaseUrl() +
-              "?page=communityAwareness&reg=" +
-              encodeURIComponent(reg) +
-              "&email=" +
-              encodeURIComponent(email);
-
-            showFormModalMessage("Eligible. Opening Community Awareness Form...", "info");
-
-            setTimeout(function() {
-              window.top.location.href = formUrl;
-            }, 600);
-
-            return;
-          }
-
-          const message = response && response.message
-            ? response.message
-            : "Eligibility could not be verified. Please try again.";
-
-          showFormModalMessage(message, "warning");
-        })
-        .withFailureHandler(function(error) {
-          button.disabled = false;
-          button.textContent = "Verify and Open Form";
-
-          const message = error && error.message
-            ? error.message
-            : "Eligibility checking failed. Please try again.";
-
-          showFormModalMessage(message, "error");
-        })
-        .checkPhase2Eligibility(reg, email);
-    }
-
+  setTimeout(function () {
+    window.location.href = targetUrl;
+  }, 500);
+}
     function openStudentStatusReport() {
-      window.top.location.href = getBaseUrl() + "?page=communityAwarenessStatusReport";
-    }
+  window.location.href =
+    APPS_SCRIPT_WEB_APP_URL + "?page=communityAwarenessStatusReport";
+}
 
-    function openGroupwiseStatusReport() {
-      window.top.location.href = getBaseUrl() + "?page=communityAwarenessGroupwiseStatusReport";
-    }
+function openGroupwiseStatusReport() {
+  window.location.href =
+    APPS_SCRIPT_WEB_APP_URL + "?page=communityAwarenessGroupwiseStatusReport";
+}
 
-    function openMentorwiseStatusReport() {
-      window.top.location.href = getBaseUrl() + "?page=communityAwarenessMentorwiseStatusReport";
-    }
+function openMentorwiseStatusReport() {
+  window.location.href =
+    APPS_SCRIPT_WEB_APP_URL + "?page=communityAwarenessMentorwiseStatusReport";
+}
 
     function downloadStudentReport() {
-      openReportDownloadModal();
-    }
+  alert("Community Awareness report download will open through the secure Apps Script report download page. This will be connected in the next step.");
+}
 
     function openReportDownloadModal() {
       document.body.classList.add("modal-open");
