@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- GITHUB DASHBOARD VERSION: redirects to Apps Script; no google.script.run -->
+  <!-- GITHUB_PHASE2_DIRECT_REDIRECT_BUILD_20260524 -->
   <title>Community Awareness Dashboard 2026 | GDC Cheepurupalli</title>
 
   <style>
@@ -1068,13 +1069,55 @@
     function buildAppsScriptUrl(pageName, params) {
       const url = new URL(APPS_SCRIPT_WEB_APP_URL);
       url.searchParams.set("page", pageName);
+
       Object.keys(params || {}).forEach(function(key) {
         const value = params[key];
+
         if (value !== undefined && value !== null && String(value).trim() !== "") {
           url.searchParams.set(key, String(value).trim());
         }
       });
+
+      /*
+        Cache-buster helps mobile browsers avoid opening an older Apps Script page.
+        It does not affect Apps Script logic.
+      */
+      url.searchParams.set("v", "phase2_direct_20260524");
+
       return url.toString();
+    }
+
+    function safeNavigateToUrl(targetUrl) {
+      /*
+        GitHub pages should not use google.script.run.
+        They should redirect to Apps Script full page routes.
+        This helper gives mobile browsers two chances to move.
+      */
+      window.location.href = targetUrl;
+
+      setTimeout(function() {
+        window.location.replace(targetUrl);
+      }, 350);
+    }
+
+    function showFormModalMessageWithLink(text, targetUrl) {
+      const box = document.getElementById("formModalMessage");
+      box.className = "modal-message show info";
+      box.innerHTML =
+        escapeHtml(text) +
+        "<br><br><a href='" +
+        escapeHtml(targetUrl) +
+        "' style='font-weight:900;color:#0f766e;text-decoration:underline;'>Tap here if the form does not open automatically</a>";
+    }
+
+    function showDownloadModalMessageWithLink(text, targetUrl) {
+      const box = document.getElementById("downloadModalMessage");
+      box.className = "modal-message show info";
+      box.innerHTML =
+        escapeHtml(text) +
+        "<br><br><a href='" +
+        escapeHtml(targetUrl) +
+        "' style='font-weight:900;color:#0f766e;text-decoration:underline;'>Tap here if the report page does not open automatically</a>";
     }
 
     function renderDashboardContext() {
@@ -1127,30 +1170,48 @@
         showFormModalMessage("Please enter a valid 12 digit Registration No.", "warning");
         return;
       }
+
       if (!/^\S+@\S+\.\S+$/.test(email)) {
         showFormModalMessage("Please enter a valid Email ID.", "warning");
         return;
       }
+
       if (!isAppsScriptUrlConfigured()) {
         showFormModalMessage("Apps Script Web App URL is not configured correctly.", "error");
         return;
       }
 
+      const targetUrl = buildAppsScriptUrl("communityAwareness", {
+        reg: reg,
+        email: email
+      });
+
+      /*
+        Important:
+        Eligibility is checked securely inside Apps Script.
+        GitHub only collects Reg No and Email ID and redirects to the Apps Script form route.
+        So students should not see an eligibility-success message inside this GitHub modal.
+      */
       button.disabled = true;
       button.textContent = "Opening...";
-      showFormModalMessage("Opening secure Apps Script eligibility check. Please wait.", "info");
-      const targetUrl = buildAppsScriptUrl("communityAwareness", { reg: reg, email: email });
-      setTimeout(function() { window.location.assign(targetUrl); }, 450);
+      showFormModalMessageWithLink(
+        "Opening the secure Community Awareness Form. Apps Script will verify Phase 1 eligibility before showing the form.",
+        targetUrl
+      );
+
+      safeNavigateToUrl(targetUrl);
     }
 
     function openStudentStatusReport() {
-      window.location.assign(buildAppsScriptUrl("communityAwarenessStatusReport"));
+      safeNavigateToUrl(buildAppsScriptUrl("communityAwarenessStatusReport"));
     }
+
     function openGroupwiseStatusReport() {
-      window.location.assign(buildAppsScriptUrl("communityAwarenessGroupwiseStatusReport"));
+      safeNavigateToUrl(buildAppsScriptUrl("communityAwarenessGroupwiseStatusReport"));
     }
+
     function openMentorwiseStatusReport() {
-      window.location.assign(buildAppsScriptUrl("communityAwarenessMentorwiseStatusReport"));
+      safeNavigateToUrl(buildAppsScriptUrl("communityAwarenessMentorwiseStatusReport"));
     }
 
     function downloadStudentReport() { openReportDownloadModal(); }
@@ -1194,21 +1255,32 @@
         showDownloadModalMessage("Please enter a valid 12 digit Registration No.", "warning");
         return;
       }
+
       if (!/^\S+@\S+\.\S+$/.test(email)) {
         showDownloadModalMessage("Please enter a valid Email ID.", "warning");
         return;
       }
+
       if (!isAppsScriptUrlConfigured()) {
         showDownloadModalMessage("Apps Script Web App URL is not configured correctly.", "error");
         return;
       }
 
+      const targetUrl = buildAppsScriptUrl("downloadCommunityAwarenessReport", {
+        reg: reg,
+        email: email
+      });
+
       button.disabled = true;
       button.textContent = "Opening...";
-      showDownloadModalMessage("Opening secure report download page. Please wait.", "info");
-      const targetUrl = buildAppsScriptUrl("downloadCommunityAwarenessReport", { reg: reg, email: email });
-      setTimeout(function() { window.location.assign(targetUrl); }, 450);
+      showDownloadModalMessageWithLink(
+        "Opening the secure Community Awareness report download page.",
+        targetUrl
+      );
+
+      safeNavigateToUrl(targetUrl);
     }
+
 
     document.addEventListener("keydown", function(event) {
       if (event.key === "Escape") {
