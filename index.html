@@ -1103,11 +1103,7 @@
     function showFormModalMessageWithLink(text, targetUrl) {
       const box = document.getElementById("formModalMessage");
       box.className = "modal-message show info";
-      box.innerHTML =
-        escapeHtml(text) +
-        "<br><br><a href='" +
-        escapeHtml(targetUrl) +
-        "' style='font-weight:900;color:#0f766e;text-decoration:underline;'>Tap here if the form does not open automatically</a>";
+      box.textContent = text;
     }
 
     function showDownloadModalMessageWithLink(text, targetUrl) {
